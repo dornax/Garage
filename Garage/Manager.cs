@@ -8,8 +8,8 @@ namespace Garage
     internal class Manager
     {
         IGarageHandler handler = default!;
-       
-        IHelperUI helperUI = default!;        
+        IFileIO fileIO = default!;
+        IHelperUI helperUI = default!;
         private IUI ui;
         private bool exitMenu = false;
         private int index = 0;
@@ -31,16 +31,16 @@ namespace Garage
         Dictionary<int, string> fuelDict = new Dictionary<int, string>() {
             { 1, "Diesel" } , { 2, "Gasoline" }, { 3, "Electric" }
         };
-
         public Manager(IUI ui)
         {
             this.ui = ui;
             handler = new GarageHandler(20);
             helperUI = new HelperUI(ui);
-
-        }
+            fileIO = new FileIO(ui, helperUI, handler);
+                    }
         public void Run()
         {
+            
             Manage();
         }
 
@@ -54,9 +54,8 @@ namespace Garage
             {
                 MainMenuCommand();
             } while (!exitMenu);
-
         }
-        public void MainMenu()
+        private void MainMenu()
         {
             ui.Clear();
             ui.WriteLine(
@@ -108,80 +107,18 @@ namespace Garage
                     SumOfVehiclesByType();
                     break;
                 case ConsoleKey.D4 or ConsoleKey.NumPad4:
-                    ReadFromFile("Test.txt");
+                    fileIO.ReadFromFile(handler, "Test.txt");
                     break;
                 case ConsoleKey.D5 or ConsoleKey.NumPad5:
-                    WriteToFile("Test.txt");
+                    fileIO.WriteToFile(handler, "Test.txt");
                     break;
                 case ConsoleKey.T:
-                    string test = handler.FileToSave();
-                    Console.Write(test);
+
                     break;
                 case ConsoleKey.Q:
                     Environment.Exit(0);
                     break;
             }
-        }
-        private void ReadFromFile(string fileName)
-        {
-            String line;
-            StreamReader sr = default!;
-            try
-            {
-
-                sr = new StreamReader(fileName);
-                //Read the first line of text
-                line = sr.ReadLine()!;
-                //Continue to read until you reach end of file
-                while (line != null)
-                {
-                    ExecuteLine(line);
-                    line = sr.ReadLine()!;
-                }
-                //close the file
-                sr.Close();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Exception: {e.Message}");
-            }
-            finally
-            {
-                sr.Close();
-                //Console.WriteLine("sr Executing finally block.");
-            }
-            helperUI.ClearInfo(1);
-            helperUI.WriteInfo($"{fileName} was read from disk. Press any key");
-            ui.GetKey();
-            helperUI.ClearInfo(1);
-        }
-        private void WriteToFile(string fileName)
-        {
-            StreamWriter sw = default!;
-            try
-            {
-
-                sw = new StreamWriter(fileName);
-
-                string fileToSave = handler.FileToSave();
-
-                sw.Write(handler.FileToSave(), false);
-                sw.Close();
-
-            }
-            catch (Exception e)
-            {
-                ui.WriteLine($"Exception: {e.Message}");
-            }
-            finally
-            {
-                sw.Close();
-                //Console.WriteLine("sw Executing finally block.");
-            }
-            helperUI.ClearInfo(1);
-            helperUI.WriteInfo($"{fileName} written to disk. Press any key.");
-            ui.GetKey();
-            helperUI.ClearInfo(1);
         }
         private void ExecuteLine(string input)
         {
@@ -263,7 +200,7 @@ namespace Garage
             ui.GetKey();
             helperUI.ClearInfo(7);
         }
-        public void SearchMenu()
+        private void SearchMenu()
         {
             ui.Clear();
             ui.WriteLine(
@@ -368,7 +305,7 @@ namespace Garage
             else ui.WriteLine(str);
             AnyKeyToSearchMenu();
         }
-        public void SearchAll()
+        private void SearchAll()
         {
             if (GarageIsEmpty()) return;
             ui.Clear();
@@ -488,7 +425,6 @@ namespace Garage
             SelectVehicle();
 
         }
-
         private bool IsGarageFull()
         {
             if (handler.IsFull)
@@ -807,8 +743,6 @@ namespace Garage
             ui.SetCursorPosition(0, helperUI.InfoRow);
             ui.WriteLine(info);
         }
-       
-       
         private List<string> DictionaryValueToList(Dictionary<int, string> dictionary)
         {
             List<string> list = new();
@@ -818,7 +752,6 @@ namespace Garage
             }
             return list;
         }
-
         private void SeedGarage()
         {
             handler.Add(new Airplane("FOO100", "Silver", 3, 2));

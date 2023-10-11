@@ -8,11 +8,14 @@ namespace Garage
 {
     internal class HelperUI : IHelperUI
     {
-        IUI ui = default!;
+        private IUI ui;
         public int LabelWidth { get; } = 20;
         public int CommandRow { get; } = 14;
         public int InfoRow { get; } = 16;
 
+        private int infoRow = 16;
+        private int commandRow = 14;
+        private int labelWidth = 20;
         public HelperUI(IUI ui)
         {
             this.ui = ui;
@@ -20,14 +23,14 @@ namespace Garage
 
         public void ClearCommand()
         {
-            ui.SetCursorPosition(0, CommandRow);
+            ui.SetCursorPosition(0, commandRow);
             ui.Write(PadRight("", Console.WindowWidth));
         }
         public void ClearInfo(int numberOfRows)
         {
             string output = "";
             string line = PadRight("", Console.WindowWidth);
-            ui.SetCursorPosition(0, InfoRow);
+            ui.SetCursorPosition(0, infoRow);
             for (int i = 0; i < numberOfRows; i++)
             {
                 output += line + '\n';
@@ -36,13 +39,13 @@ namespace Garage
         }
         public void WriteInfo(string info)
         {
-            ui.SetCursorPosition(0, InfoRow);
+            ui.SetCursorPosition(0, infoRow);
             ui.WriteLine(info);
         }
         public void WriteEnterToConfirm() => WriteInfo("Press Enter to confirm.");
         public void WriteRegistrationLabel(int x, int y)
         {
-            string label = PadLeft("RegistrationNumber:", LabelWidth) + " ";
+            string label = PadLeft("RegistrationNumber:", labelWidth) + " ";
             ui.SetCursorPosition(x, y);
             ui.Write(label);
         }

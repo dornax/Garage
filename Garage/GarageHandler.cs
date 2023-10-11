@@ -22,7 +22,6 @@ namespace Garage
             
             return result;
         }
-
         public bool Add(IVehicle vehicle)
         {
             IVehicle test = garage.FirstOrDefault(v => v.RegistrationNumber == vehicle.RegistrationNumber)!;
@@ -31,8 +30,6 @@ namespace Garage
             else
                 return false;
         }
-
-
         public bool Remove(string registrationNumber)
         {
             IVehicle vehicle = garage.FirstOrDefault(v => v.RegistrationNumber == registrationNumber)!;
@@ -46,8 +43,6 @@ namespace Garage
                 return true;
             }
         }
-
-
         public string FileToSave()
         {
             string output = $"\"SizeOfGarage\"|{SizeOfGarage}\n";
@@ -58,13 +53,11 @@ namespace Garage
             }
             return output;
         }
-
         public string GetAll()
         {
             var vehicles = garage.OrderBy(v => v.RegistrationNumber).ToList();
             return WriteVehicle(vehicles);
         }
-
         public string GetByColor(string color)
         {
             IEnumerable<IVehicle> vehicles = garage
@@ -79,7 +72,6 @@ namespace Garage
                 .OrderBy(x => x.RegistrationNumber).ToList();
             return WriteVehicle(vehicles);
         }
-
         public string GetByColor(string vehicle, string color)
         {
             IEnumerable<IVehicle> vehicles = garage
@@ -87,8 +79,6 @@ namespace Garage
                 .OrderBy(x => x.RegistrationNumber).ToList();
             return WriteVehicle(vehicles);
         }
-
-
         public string GetAll(string vehicle)
         {
             IEnumerable<IVehicle> vehicles = garage
@@ -111,7 +101,6 @@ namespace Garage
             string result = WriteVehicle(vehicles);
             return result;
         }
-
         public string GetAll(Func<IVehicle, bool> search)
         {
             string result = "";
@@ -120,14 +109,12 @@ namespace Garage
             result = WriteVehicle(vehicles);
             return result;
         }
-
         private int NumberOfVehicles(string vehicle)
         {
             var vehicles = garage.Where(v => v.GetType().Name == vehicle);
             int numberOfVehicles = vehicles.Count();
             return numberOfVehicles;
         }
-
         public string CountAllVehicles()
         {
             string output = "";
@@ -142,9 +129,7 @@ namespace Garage
             }
             return output;
         }
-
         private string WriteVehicle(IVehicle vehicle) => VehicleToString(vehicle);
-
         private string WriteVehicle(IEnumerable<IVehicle> vehicles)
         {
             string result = "";
