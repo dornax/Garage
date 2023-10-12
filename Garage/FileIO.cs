@@ -9,20 +9,19 @@ namespace Garage
 {
     internal class FileIO : IFileIO
     {
-        //IUI ui = default!;
-        //IGarageHandler handler = default!;
-        //IHelperUI helperUI = default!;    
-        private IHelperUI helperUI;
+       
         private IUI ui;
         private IGarageHandler handler;
-        public FileIO(IUI ui, IHelperUI helperUI, IGarageHandler handler)
+
+        VehicleData vd = new();
+        
+        public FileIO(IGarageHandler handler, IUI ui)
         {
             this.ui = ui;
             this.handler = handler;
-            this.helperUI = helperUI;
         }
-       
-        public void ReadFromFile(IGarageHandler handler,string fileName)
+
+        public void ReadFromFile(IGarageHandler handler, string fileName)
         {
             
             String line;
@@ -49,12 +48,11 @@ namespace Garage
             finally
             {
                 sr.Close();
-                //Console.WriteLine("sr Executing finally block.");
             }
-            helperUI.ClearInfo(1);
-            helperUI.WriteInfo($"{fileName} was read from disk. Press any key");
+            ui.ClearInfo(1);
+            ui.WriteInfo($"{fileName} was read from disk. Press any key");
             ui.GetKey();
-            helperUI.ClearInfo(1);
+            ui.ClearInfo(1);
         }
         public void WriteToFile(IGarageHandler handler, string fileName)
         {
@@ -77,16 +75,14 @@ namespace Garage
             finally
             {
                 sw.Close();
-                //Console.WriteLine("sw Executing finally block.");
             }
-            helperUI.ClearInfo(1);
-            helperUI.WriteInfo($"{fileName} written to disk. Press any key.");
+            ui.ClearInfo(1);
+            ui.WriteInfo($"{fileName} written to disk. Press any key.");
             ui.GetKey();
-            helperUI.ClearInfo(1);
+            ui.ClearInfo(1);
         }
         private void ExecuteLine(IGarageHandler handler, string input)
         {
-
             string registrationNumber = "";
             string vehicleColor = "";
             int numberOfWheels = 0;
@@ -98,54 +94,44 @@ namespace Garage
             string[] words = ConvertLine(input);
             string word = "", number = "";
             word = words[0];
+
+            if (word == "SizeOfGarage")
+            {
+                number = words[1];
+                int.TryParse(number, out int result);
+                if (result > handler.SizeOfGarage)
+                    handler = new GarageHandler(result);
+                return;
+            }
+            if (vd.VList.Contains(word))
+            {
+                registrationNumber = words[1];
+                vehicleColor = words[2];
+                number = words[3];
+                int.TryParse(number, out numberOfWheels);
+                number = words[4];
+            }
             switch (word)
             {
-                case "SizeOfGarage":
-                    number = words[1];
-                    int.TryParse(number, out int result);
-                    if (result > handler.SizeOfGarage)
-                        handler = new GarageHandler(result);
-                    break;
                 case "Airplane":
-                    registrationNumber = words[1];
-                    vehicleColor = words[2];
-                    number = words[3];
-                    int.TryParse(number, out numberOfWheels);
-                    number = words[4];
                     int.TryParse(number, out numberOfEngines);
                     handler.Add(new Airplane(registrationNumber, vehicleColor, numberOfWheels, numberOfEngines));
                     break;
                 case "Boat":
-                    registrationNumber = words[1];
-                    vehicleColor = words[2];
-                    number = words[3];
                     int.TryParse(number, out numberOfWheels);
                     number = words[4];
                     float.TryParse(number, out vehicleLength);
                     handler.Add(new Boat(registrationNumber, vehicleColor, numberOfWheels, vehicleLength));
                     break;
                 case "Bus":
-                    registrationNumber = words[1];
-                    vehicleColor = words[2];
-                    number = words[3];
-                    int.TryParse(number, out numberOfWheels);
-                    number = words[4];
                     int.TryParse(number, out numberOfSeats);
                     handler.Add(new Bus(registrationNumber, vehicleColor, numberOfWheels, numberOfSeats));
                     break;
                 case "Car":
-                    registrationNumber = words[1];
-                    vehicleColor = words[2];
-                    number = words[3];
-                    int.TryParse(number, out numberOfWheels);
                     vehicleFuel = words[4];
                     handler.Add(new Car(registrationNumber, vehicleColor, numberOfWheels, vehicleFuel));
                     break;
                 case "Motorcycle":
-                    registrationNumber = words[1];
-                    vehicleColor = words[2];
-                    number = words[3];
-                    int.TryParse(number, out numberOfWheels);
                     number = words[4];
                     int.TryParse(number, out cylinderVolume);
                     handler.Add(new Motorcycle(registrationNumber, vehicleColor, numberOfWheels, cylinderVolume));

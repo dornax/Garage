@@ -10,12 +10,49 @@ namespace Garage
     public class ConsoleUI : IUI
     {
         private (int x, int y) pos = (0, 0);
+        private int regNumLength = 6;
+
+        public int LabelWidth { get; } = 20;
+        public int CommandRow { get; } = 14;
+        public int InfoRow { get; } = 16;
+
         public bool CursorVisible { set => Console.CursorVisible = value; }
 
         public void Clear()
         {
             Console.Clear();
         }
+        public void ClearCommand()
+        {
+            SetCursorPosition(0, CommandRow);
+            Write(PadRight("", Console.WindowWidth));
+        }
+        public void ClearInfo(int numberOfRows)
+        {
+            string output = "";
+            string line = PadRight("", Console.WindowWidth);
+            SetCursorPosition(0, InfoRow);
+            for (int i = 0; i < numberOfRows; i++)
+            {
+                output += line + '\n';
+            }
+            Write(output);
+        }
+        public void WriteInfo(string info)
+        {
+            SetCursorPosition(0, InfoRow);
+            WriteLine(info);
+        }
+        public void WriteEnterToConfirm() => WriteInfo("Press Enter to confirm.");
+        public void WriteRegistrationLabel(int x, int y)
+        {
+            string label = PadLeft("RegistrationNumber:", LabelWidth) + " ";
+            SetCursorPosition(x, y);
+            Write(label);
+        }
+
+        public string PadRight(string str, int textFieldWidth) => str.PadRight(textFieldWidth);
+        public string PadLeft(string str, int textFieldWidth) => str.PadLeft(textFieldWidth);
 
         public string ReadLine() 
         {
@@ -59,7 +96,8 @@ namespace Garage
             string result = default!;
             string str = "";
             int index = 0;
-
+            pos = Console.GetCursorPosition();
+            Write(PadRight("", numberOfDigits));
             pos = Console.GetCursorPosition();
             ConsoleKeyInfo getKey = Console.ReadKey(intercept: true);
             while (getKey.Key != ConsoleKey.Enter)
@@ -102,6 +140,8 @@ namespace Garage
             int index = 0;
 
             pos = Console.GetCursorPosition();
+            Write(PadRight("", numberOfDigits));
+            pos = Console.GetCursorPosition();
             ConsoleKeyInfo getKey = Console.ReadKey(intercept: true);
             while (getKey.Key != ConsoleKey.Enter)
             {
@@ -139,8 +179,10 @@ namespace Garage
             string result = default!;
             string str = "";
             int index = 0;
-            CursorVisible = true;
             pos = Console.GetCursorPosition();
+            Write(PadRight("", numberOfCharacters));
+            CursorVisible = true;
+            SetCursorPosition(pos.x, pos.y);
             ConsoleKeyInfo getKey = Console.ReadKey(intercept: true);
             while (getKey.Key != ConsoleKey.Enter)
             {
@@ -173,13 +215,15 @@ namespace Garage
             }
             return result;
         }
-        public string GetRegistrationNumber()
+        public string GetRegNum()
         {
             string result = default!;
             string str = "";
             int index = 0;
 
             pos = Console.GetCursorPosition();
+            Write(PadRight("",regNumLength));
+            SetCursorPosition(pos.x, pos.y); 
             ConsoleKeyInfo getKey = Console.ReadKey(intercept: true);
             while (getKey.Key != ConsoleKey.Enter)
             {

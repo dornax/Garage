@@ -1,5 +1,6 @@
 ﻿using Garage.Vehicles;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Transactions;
 using System.Xml.Serialization;
 
@@ -9,7 +10,6 @@ namespace Garage
     {
         IGarageHandler handler = default!;
         IFileIO fileIO = default!;
-        IHelperUI helperUI = default!;
         private IUI ui;
         private bool exitMenu = false;
         private int index = 0;
@@ -35,8 +35,8 @@ namespace Garage
         {
             this.ui = ui;
             handler = new GarageHandler(20);
-            helperUI = new HelperUI(ui);
-            fileIO = new FileIO(ui, helperUI, handler);
+           
+            fileIO = new FileIO(handler, ui);
                     }
         public void Run()
         {
@@ -81,9 +81,9 @@ namespace Garage
                     CreateGarage();
                     break;
                 case ConsoleKey.D2 or ConsoleKey.NumPad2:
-                    helperUI.ClearCommand();
+                    ui.ClearCommand();
                     SeedGarage();
-                    helperUI.WriteInfo("Populating the garage with a few vehicles");
+                    ui.WriteInfo("Populating the garage with a few vehicles");
                     break;
                 case ConsoleKey.A:
 
@@ -92,7 +92,7 @@ namespace Garage
                     break;
                 case ConsoleKey.F:
                     FindVehicle();
-                    helperUI.ClearCommand();
+                    ui.ClearCommand();
                     break;
                 case ConsoleKey.R:
                     RemoveVehicle();
@@ -120,85 +120,16 @@ namespace Garage
                     break;
             }
         }
-        private void ExecuteLine(string input)
-        {
-            string[] words = ConvertLine(input);
-            string word = "", number = "";
-            word = words[0];
-            switch (word)
-            {
-                case "SizeOfGarage":
-                    number = words[1];
-                    int.TryParse(number, out int result);
-                    if (result > handler.SizeOfGarage)
-                        handler = new GarageHandler(result);
-                    break;
-                case "Airplane":
-                    registrationNumber = words[1];
-                    vehicleColor = words[2];
-                    number = words[3];
-                    int.TryParse(number, out numberOfWheels);
-                    number = words[4];
-                    int.TryParse(number, out numberOfEngines);
-                    handler.Add(new Airplane(registrationNumber, vehicleColor, numberOfWheels, numberOfEngines));
-                    break;
-                case "Boat":
-                    registrationNumber = words[1];
-                    vehicleColor = words[2];
-                    number = words[3];
-                    int.TryParse(number, out numberOfWheels);
-                    number = words[4];
-                    float.TryParse(number, out vehicleLength);
-                    handler.Add(new Boat(registrationNumber, vehicleColor, numberOfWheels, vehicleLength));
-                    break;
-                case "Bus":
-                    registrationNumber = words[1];
-                    vehicleColor = words[2];
-                    number = words[3];
-                    int.TryParse(number, out numberOfWheels);
-                    number = words[4];
-                    int.TryParse(number, out numberOfSeats);
-                    handler.Add(new Bus(registrationNumber, vehicleColor, numberOfWheels, numberOfSeats));
-                    break;
-                case "Car":
-                    registrationNumber = words[1];
-                    vehicleColor = words[2];
-                    number = words[3];
-                    int.TryParse(number, out numberOfWheels);
-                    vehicleFuel = words[4];
-                    handler.Add(new Car(registrationNumber, vehicleColor, numberOfWheels, vehicleFuel));
-                    break;
-                case "Motorcycle":
-                    registrationNumber = words[1];
-                    vehicleColor = words[2];
-                    number = words[3];
-                    int.TryParse(number, out numberOfWheels);
-                    number = words[4];
-                    int.TryParse(number, out cylinderVolume);
-                    handler.Add(new Motorcycle(registrationNumber, vehicleColor, numberOfWheels, cylinderVolume));
-                    break;
-            }
-        }
-        private string[] ConvertLine(string input)
-        {
-            string[] words = input!.Split('|');
-            string[] modWords = new string[5];
-            for (int i = 0; i < words.Length; i++)
-            {
-                if (words[i].Contains('"')) modWords[i] = words[i].Replace('"', ' ').Trim();
-                else modWords[i] = words[i].Trim();
-            }
-            return modWords;
-        }
+       
         private void SumOfVehiclesByType()
         {
             if (GarageIsEmpty()) { return; }
-            helperUI.ClearInfo(1);
-            ui.SetCursorPosition(0, helperUI.InfoRow);
+            ui.ClearInfo(1);
+            ui.SetCursorPosition(0, ui.InfoRow);
             ui.WriteLine($"{handler.CountAllVehicles()}");
             ui.WriteLine("Press any key to clear");
             ui.GetKey();
-            helperUI.ClearInfo(7);
+            ui.ClearInfo(7);
         }
         private void SearchMenu()
         {
@@ -263,7 +194,6 @@ namespace Garage
         }
         private void SearchVehicleByType()
         {
-
             if (GarageIsEmpty()) return;
             search = true;
             ui.Clear();
@@ -321,16 +251,16 @@ namespace Garage
         }
         private void CreateGarage()
         {
-            helperUI.ClearInfo(2);
-            ui.SetCursorPosition(0, helperUI.InfoRow);
+            ui.ClearInfo(2);
+            ui.SetCursorPosition(0, ui.InfoRow);
             ui.Write($"Current garage have {handler.SizeOfGarage} spaces. Do you want\n" +
                 "to erase current and create a new Y/n? ");
 
-            string input = ui.ReadLine();
+            string input = ui.GetInput(1);
 
             if (input == "Y")
             {
-                ui.SetCursorPosition(0, helperUI.InfoRow + 3);
+                ui.SetCursorPosition(0, ui.InfoRow + 3);
                 string label = "Number of parking spaces: ";
                 ui.Write(label);
 
@@ -339,51 +269,49 @@ namespace Garage
                 if (int.TryParse(input, out int value))
                 {
                     handler = new GarageHandler(value);
-                    helperUI.ClearInfo(4);
-                    helperUI.WriteInfo($"New garage created with {value} spaces");
+                    ui.ClearInfo(4);
+                    ui.WriteInfo($"New garage created with {value} spaces");
                 }
             }
-            else helperUI.ClearInfo(2);
+            else ui.ClearInfo(2);
         }
-        private void WriteEnterToConfirm() => helperUI.WriteInfo("Press Enter to confirm.");
+        private void WriteEnterToConfirm() => ui.WriteInfo("Press Enter to confirm.");
         private void FindVehicle()
         {
-            helperUI.ClearCommand();
-            helperUI.ClearInfo(1);
+            ui.ClearCommand();
+            ui.ClearInfo(1);
             if (GarageIsEmpty()) { return; }
-            helperUI.WriteInfo("Find Vehicle. Press Enter to confirm.");
-            helperUI.WriteRegistrationLabel(0, helperUI.CommandRow);
-            registrationNumber = ui.GetRegistrationNumber();
+            ui.WriteInfo("Find Vehicle. Press Enter to confirm.");
+            ui.WriteRegistrationLabel(0, ui.CommandRow);
+            registrationNumber = ui.GetRegNum();
 
             bool success = false;
             while (!success)
             {
-                bool validRegistrationNumber = ValidateRegNumberLength(registrationNumber);
-                if (validRegistrationNumber)
+                bool validRegNum = ValidateRegNumLength(registrationNumber);
+                if (validRegNum)
                 {
                     registrationNumber = registrationNumber.ToUpper();
                     success = true;
                 }
                 else
                 {
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, helperUI.CommandRow);
-                    ui.Write("      ");
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, helperUI.CommandRow);
-                    registrationNumber = ui.GetRegistrationNumber();
+                    ui.SetCursorPosition(ui.LabelWidth + 1, ui.CommandRow);
+                    registrationNumber = ui.GetRegNum();
                     success = false;
                 }
             }
             string vehicle = handler.Find(registrationNumber);
             if (vehicle == "")
             {
-                helperUI.ClearInfo(1);
-                helperUI.WriteInfo($"{registrationNumber} not in the garage");
+                ui.ClearInfo(1);
+                ui.WriteInfo($"{registrationNumber} not in the garage");
             }
             else
             {
-                helperUI.ClearInfo(1);
-                helperUI.ClearCommand();
-                helperUI.WriteInfo(vehicle);
+                ui.ClearInfo(1);
+                ui.ClearCommand();
+                ui.WriteInfo(vehicle);
             }
 
         }
@@ -391,34 +319,30 @@ namespace Garage
         {
             if (IsGarageFull()) return;
             ui.Clear();
-            helperUI.WriteEnterToConfirm();
-            helperUI.WriteRegistrationLabel(0, 1);
-            registrationNumber = ui.GetRegistrationNumber();
+            ui.WriteEnterToConfirm();
+            ui.WriteRegistrationLabel(0, 1);
+            registrationNumber = ui.GetRegNum();
 
             bool success = false;
             do
             {
-                if (ValidateRegNumberLength(registrationNumber!))
+                if (ValidateRegNumLength(registrationNumber!))
                 {
                     registrationNumber = registrationNumber!.ToUpper();
                     if (handler.Find(registrationNumber) != "")
                     {
-                        helperUI.ClearInfo(1);
-                        helperUI.WriteInfo($"{registrationNumber} is already in the garage");
-                        ui.SetCursorPosition(helperUI.LabelWidth + 1, 1);
-                        ui.Write("      ");
-                        ui.SetCursorPosition(helperUI.LabelWidth + 1, 1);
-                        registrationNumber = ui.GetRegistrationNumber();
+                        ui.ClearInfo(1);
+                        ui.WriteInfo($"{registrationNumber} is already in the garage");
+                        ui.SetCursorPosition(ui.LabelWidth + 1, 1);
+                        registrationNumber = ui.GetRegNum();
                         success = false;
                     }
                     else success = true;
                 }
                 else
                 {
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, 1);
-                    ui.Write("      ");
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, 1);
-                    registrationNumber = ui.GetRegistrationNumber();
+                    ui.SetCursorPosition(ui.LabelWidth + 1, 1);
+                    registrationNumber = ui.GetRegNum();
                     success = false;
                 }
             } while (!success);
@@ -429,24 +353,24 @@ namespace Garage
         {
             if (handler.IsFull)
             {
-                helperUI.ClearInfo(1);
-                helperUI.WriteInfo("Garage is full");
+                ui.ClearInfo(1);
+                ui.WriteInfo("Garage is full");
                 return true;
             }
             else return false;
         }
         private void SelectVehicle()
         {
-            helperUI.ClearInfo(1);
+            ui.ClearInfo(1);
             ui.CursorVisible = false;
-            ui.SetCursorPosition(0, helperUI.InfoRow);
+            ui.SetCursorPosition(0, ui.InfoRow);
             ui.WriteColoredFirstLetter(DictionaryValueToList(vehicles));
             ui.WriteLine("Press first letter of vehicle to select type\n" +
                          "of vehicle, then press Enter to confirm.\n" +
                          "Press Escape to return to the menu.");
             ui.SetCursorPosition(0, 2);
             /*        123456789+123456789+123456789+12345679+                 */
-            ui.Write(helperUI.PadLeft("Vehicle:", helperUI.LabelWidth));
+            ui.Write(ui.PadLeft("Vehicle:", ui.LabelWidth));
 
             exitMenu = false;
             do { VehicleSelection(); } while (!exitMenu);
@@ -457,32 +381,33 @@ namespace Garage
         {
             List<string> vehicleList = new List<string>();
             vehicleList = DictionaryValueToList(vehicles);
-
+            VehicleData vd = new();
             ConsoleKey keyPressed = ui.GetKey();
             switch (keyPressed)
             {
                 case ConsoleKey.A:
                     vehicle = "Airplane";
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, 2);
-                    ui.WriteLine(helperUI.PadRight(vehicle, 10));
+                    ui.SetCursorPosition(ui.LabelWidth + 1, 2);
+                    ui.WriteLine(ui.PadRight(vehicle, 10));
                     break;
                 case ConsoleKey.B:
                     IEnumerable<string> vehicles = vehicleList.Where(v => v.StartsWith("B"));
+                    
                     int numberOfVehicles = vehicles.Count();
                     vehicle = vehicles.ElementAt(index);
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, 2);
-                    ui.WriteLine(helperUI.PadRight(vehicle, 10));
+                    ui.SetCursorPosition(ui.LabelWidth + 1, 2);
+                    ui.WriteLine(ui.PadRight(vehicle, 10));
                     index++;
                     if (index == numberOfVehicles) index = 0;
                     break;
                 case ConsoleKey.C:
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, 2);
+                    ui.SetCursorPosition(ui.LabelWidth + 1, 2);
                     vehicle = "Car";
-                    ui.Write(helperUI.PadRight(vehicle, 10));
+                    ui.Write(ui.PadRight(vehicle, 10));
                     break;
                 case ConsoleKey.M:
                     vehicle = "Motorcycle";
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, 2);
+                    ui.SetCursorPosition(ui.LabelWidth + 1, 2);
                     ui.Write($"{vehicle}");
                     break;
                 case ConsoleKey.Enter:
@@ -503,22 +428,22 @@ namespace Garage
         private void RemoveVehicle()
         {
             if (GarageIsEmpty()) { return; }
-            helperUI.ClearInfo(1);
-            helperUI.ClearCommand();
-            helperUI.WriteInfo("Remove Vehicle. Press Enter to confirm, Escape to cancel.");
-            helperUI.WriteRegistrationLabel(0, helperUI.CommandRow);
+            ui.ClearInfo(1);
+            ui.ClearCommand();
+            ui.WriteInfo("Remove Vehicle. Press Enter to confirm, Escape to cancel.");
+            ui.WriteRegistrationLabel(0, ui.CommandRow);
 
-            registrationNumber = ui.GetRegistrationNumber();
+            registrationNumber = ui.GetRegNum();
             if (registrationNumber == null)
             {
-                helperUI.ClearInfo(1);
-                helperUI.ClearCommand();
+                ui.ClearInfo(1);
+                ui.ClearCommand();
                 return;
             }
             bool success = false;
             while (!success)
             {
-                bool validRegistrationNumber = ValidateRegNumberLength(registrationNumber);
+                bool validRegistrationNumber = ValidateRegNumLength(registrationNumber);
                 if (validRegistrationNumber)
                 {
                     registrationNumber = registrationNumber.ToUpper();
@@ -526,11 +451,9 @@ namespace Garage
                 }
                 else
                 {
-                    helperUI.ClearCommand();
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, helperUI.CommandRow);
-                    registrationNumber = ui.GetRegistrationNumber();
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, helperUI.CommandRow);
-                    ui.Write("      ");
+                    ui.ClearCommand();
+                    ui.SetCursorPosition(ui.LabelWidth + 1, ui.CommandRow);
+                    registrationNumber = ui.GetRegNum();
                     success = false;
                 }
             }
@@ -540,24 +463,24 @@ namespace Garage
         {
             if (handler.Find(registrationNumber) == "")
             {
-                helperUI.ClearInfo(1);
-                helperUI.WriteInfo($"{registrationNumber} not in the garage");
+                ui.ClearInfo(1);
+                ui.WriteInfo($"{registrationNumber} not in the garage");
             }
             else
             {
                 handler.Remove(registrationNumber);
-                helperUI.ClearInfo(1);
-                helperUI.ClearCommand();
-                helperUI.WriteInfo($"{registrationNumber} removed from the garage");
+                ui.ClearInfo(1);
+                ui.ClearCommand();
+                ui.WriteInfo($"{registrationNumber} removed from the garage");
             }
         }
         private void GetColor()
         {
             int row = 3;
-            helperUI.ClearInfo(4);
-            helperUI.WriteEnterToConfirm();
+            ui.ClearInfo(4);
+            ui.WriteEnterToConfirm();
             ui.SetCursorPosition(0, row);
-            string label = helperUI.PadLeft("Color:", helperUI.LabelWidth) + " ";
+            string label = ui.PadLeft("Color:", ui.LabelWidth) + " ";
             ui.Write(label);
 
             vehicleColor = ui.GetInput(20);
@@ -572,11 +495,11 @@ namespace Garage
                 }
                 else
                 {
-                    helperUI.ClearInfo(1);
-                    helperUI.WriteInfo(message);
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, row);
-                    ui.Write(helperUI.PadRight("", 20));
-                    ui.SetCursorPosition(helperUI.LabelWidth + 1, row);
+                    ui.ClearInfo(1);
+                    ui.WriteInfo(message);
+                    ui.SetCursorPosition(ui.LabelWidth + 1, row);
+                    ui.Write(ui.PadRight("", 20));
+                    ui.SetCursorPosition(ui.LabelWidth + 1, row);
                     vehicleColor = ui.GetInput(20);
                     success = false;
                 }
@@ -593,10 +516,10 @@ namespace Garage
         }
         private void GetWheels()
         {
-            helperUI.ClearInfo(4);
-            helperUI.WriteEnterToConfirm();
+            ui.ClearInfo(4);
+            ui.WriteEnterToConfirm();
             ui.SetCursorPosition(0, 4);
-            string label = helperUI.PadLeft("Wheels:", helperUI.LabelWidth) + " ";
+            string label = ui.PadLeft("Wheels:", ui.LabelWidth) + " ";
             ui.Write(label);
             string input = ui.GetDigit(2);
             int.TryParse(input, out numberOfWheels);
@@ -636,18 +559,18 @@ namespace Garage
         }
         private void WriteFuel(string fuel, int row)
         {
-            ui.SetCursorPosition(helperUI.LabelWidth + 1, row);
-            ui.WriteLine(helperUI.PadRight(fuel, 10));
+            ui.SetCursorPosition(ui.LabelWidth + 1, row);
+            ui.WriteLine(ui.PadRight(fuel, 10));
         }
         private void GetFuel()
         {
-            ui.SetCursorPosition(0, helperUI.InfoRow);
+            ui.SetCursorPosition(0, ui.InfoRow);
             ui.WriteColoredFirstLetter(DictionaryValueToList(fuelDict));
             ui.WriteLine("Press first letter of fuel to select type\n" +
-                         "of fuel, then press Enter to confirm.");
+                         "of fuel, then press Enter to confirm. Escape to cancel");
 
             ui.SetCursorPosition(0, 5);
-            string label = helperUI.PadLeft("Fuel:", helperUI.LabelWidth) + " ";
+            string label = ui.PadLeft("Fuel:", ui.LabelWidth) + " ";
             ui.Write(label);
             exitMenu = false;
             do { FuelSelection(); } while (!exitMenu);
@@ -659,10 +582,10 @@ namespace Garage
         }
         private void GetSeats()
         {
-            helperUI.ClearInfo(4);
-            helperUI.WriteEnterToConfirm();
+            ui.ClearInfo(4);
+            ui.WriteEnterToConfirm();
             ui.SetCursorPosition(0, 5);
-            string label = helperUI.PadLeft("Seats:", helperUI.LabelWidth) + " ";
+            string label = ui.PadLeft("Seats:", ui.LabelWidth) + " ";
             ui.Write(label);
             string input = ui.GetDigit(3);
             if (input == null)
@@ -676,9 +599,9 @@ namespace Garage
         }
         private void GetEngines()
         {
-            helperUI.WriteEnterToConfirm();
+            ui.WriteEnterToConfirm();
             ui.SetCursorPosition(0, 5);
-            string label = helperUI.PadLeft("Engines:", helperUI.LabelWidth) + " ";
+            string label = ui.PadLeft("Engines:", ui.LabelWidth) + " ";
             ui.Write(label);
             string input = ui.GetDigit(5);
             int.TryParse(input, out numberOfEngines);
@@ -687,9 +610,9 @@ namespace Garage
         }
         private void GetLength()
         {
-            helperUI.WriteEnterToConfirm();
+            ui.WriteEnterToConfirm();
             ui.SetCursorPosition(0, 4);
-            string label = helperUI.PadLeft("Length:", helperUI.LabelWidth) + " ";
+            string label = ui.PadLeft("Length:", ui.LabelWidth) + " ";
             ui.Write(label);
             string input = ui.GetValue(5);
             float.TryParse(input, out vehicleLength);
@@ -698,9 +621,9 @@ namespace Garage
         }
         private void GetCylinderVolume()
         {
-            helperUI.WriteEnterToConfirm();
+            ui.WriteEnterToConfirm();
             ui.SetCursorPosition(0, 5);
-            string label = helperUI.PadLeft("CylinderVolume:", helperUI.LabelWidth) + " ";
+            string label = ui.PadLeft("CylinderVolume:", ui.LabelWidth) + " ";
             ui.Write(label);
             string input = ui.GetDigit(4);
             int.TryParse(input, out cylinderVolume);
@@ -711,20 +634,20 @@ namespace Garage
         {
             if (handler.Count == 0)
             {
-                helperUI.ClearInfo(1);
-                helperUI.WriteInfo("Garage is empty");
+                ui.ClearInfo(1);
+                ui.WriteInfo("Garage is empty");
                 return true;
             }
             else
                 return false;
         }
-        private bool ValidateRegNumberLength(string str)
+        private bool ValidateRegNumLength(string str)
         {
             if (str.Length == 6) return true;
             else
             {
-                helperUI.ClearInfo(1);
-                helperUI.WriteInfo("Registration Number should be 6 characters long.");
+                ui.ClearInfo(1);
+                ui.WriteInfo("Registration Number should be 6 characters long.");
                 return false;
             }
         }
@@ -740,7 +663,7 @@ namespace Garage
         }
         private void WriteInfo(string info)
         {
-            ui.SetCursorPosition(0, helperUI.InfoRow);
+            ui.SetCursorPosition(0, ui.InfoRow);
             ui.WriteLine(info);
         }
         private List<string> DictionaryValueToList(Dictionary<int, string> dictionary)
