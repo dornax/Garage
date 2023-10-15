@@ -2,7 +2,7 @@
 {
     internal interface IFileIO
     {
-        void ReadFromFile(IGarageHandler handler, string fileName);
-        void WriteToFile(IGarageHandler handler, string fileName);
+        public IGarageHandler ReadFromFile(IGarageHandler handler, IUtil iUtil, string fileName);
+        public void WriteToFile(IGarageHandler handler, IUtil iUtil, string fileName);
     }
 }

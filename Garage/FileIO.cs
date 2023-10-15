@@ -1,9 +1,4 @@
 ﻿using Garage.Vehicles;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Garage
 {
@@ -11,31 +6,27 @@ namespace Garage
     {
        
         private IUI ui;
-        private IGarageHandler handler;
-
-        VehicleData vd = new();
-        
+        private IGarageHandler _handler;
         public FileIO(IGarageHandler handler, IUI ui)
         {
             this.ui = ui;
-            this.handler = handler;
+            _handler = handler;
         }
 
-        public void ReadFromFile(IGarageHandler handler, string fileName)
+        public IGarageHandler ReadFromFile(IGarageHandler handler, IUtil iUtil, string fileName)
         {
-            
+            _handler = handler;
             String line;
             StreamReader sr = default!;
             try
             {
-
                 sr = new StreamReader(fileName);
                 //Read the first line of text
                 line = sr.ReadLine()!;
                 //Continue to read until you reach end of file
                 while (line != null)
                 {
-                    ExecuteLine(handler, line);
+                    _handler = ExecuteLine(line);
                     line = sr.ReadLine()!;
                 }
                 //close the file
@@ -49,19 +40,18 @@ namespace Garage
             {
                 sr.Close();
             }
-            ui.ClearInfo(1);
-            ui.WriteInfo($"{fileName} was read from disk. Press any key");
+            iUtil.ClearInfo(1);
+            iUtil.WriteInfo($"{fileName} was read from disk. Press any key");
             ui.GetKey();
-            ui.ClearInfo(1);
+            iUtil.ClearInfo(1);
+            return _handler;
         }
-        public void WriteToFile(IGarageHandler handler, string fileName)
+        public void WriteToFile(IGarageHandler handler, IUtil iUtil, string fileName)
         {
             StreamWriter sw = default!;
             try
             {
-
                 sw = new StreamWriter(fileName);
-
                 string fileToSave = handler.FileToSave();
 
                 sw.Write(handler.FileToSave(), false);
@@ -76,21 +66,15 @@ namespace Garage
             {
                 sw.Close();
             }
-            ui.ClearInfo(1);
-            ui.WriteInfo($"{fileName} written to disk. Press any key.");
+            iUtil.ClearInfo(1);
+            iUtil.WriteInfo($"{fileName} written to disk. Press any key.");
             ui.GetKey();
-            ui.ClearInfo(1);
+            iUtil.ClearInfo(1);
         }
-        private void ExecuteLine(IGarageHandler handler, string input)
+        private IGarageHandler ExecuteLine(string input)
         {
-            string registrationNumber = "";
-            string vehicleColor = "";
-            int numberOfWheels = 0;
-            string vehicleFuel = "";
-            int cylinderVolume = 0;
-            int numberOfSeats;
-            float vehicleLength;
-            int numberOfEngines;
+            
+            VehicleData vd = new();
             string[] words = ConvertLine(input);
             string word = "", number = "";
             word = words[0];
@@ -99,44 +83,43 @@ namespace Garage
             {
                 number = words[1];
                 int.TryParse(number, out int result);
-                if (result > handler.SizeOfGarage)
-                    handler = new GarageHandler(result);
-                return;
+                if (result > _handler.SizeOfGarage)
+                    _handler = new GarageHandler(result);
+                
             }
             if (vd.VList.Contains(word))
             {
-                registrationNumber = words[1];
-                vehicleColor = words[2];
+                vd.RegNum = words[1];
+                vd.Color = words[2];
                 number = words[3];
-                int.TryParse(number, out numberOfWheels);
+                int.TryParse(number, out int result);
+                vd.Wheels = result;
                 number = words[4];
             }
             switch (word)
             {
                 case "Airplane":
-                    int.TryParse(number, out numberOfEngines);
-                    handler.Add(new Airplane(registrationNumber, vehicleColor, numberOfWheels, numberOfEngines));
+                    int.TryParse(number, out int result);
+                    _handler.Add(new Airplane(vd.RegNum, vd.Color, vd.Wheels, vd.Engines = result));
                     break;
                 case "Boat":
-                    int.TryParse(number, out numberOfWheels);
-                    number = words[4];
-                    float.TryParse(number, out vehicleLength);
-                    handler.Add(new Boat(registrationNumber, vehicleColor, numberOfWheels, vehicleLength));
+                    float.TryParse(number, out float value);
+                    _handler.Add(new Boat(vd.RegNum, vd.Color, vd.Wheels, vd.Length = value));
                     break;
                 case "Bus":
-                    int.TryParse(number, out numberOfSeats);
-                    handler.Add(new Bus(registrationNumber, vehicleColor, numberOfWheels, numberOfSeats));
+                    int.TryParse(number, out result);
+                    _handler.Add(new Bus(vd.RegNum, vd.Color, vd.Wheels, vd.Seats = result));
                     break;
                 case "Car":
-                    vehicleFuel = words[4];
-                    handler.Add(new Car(registrationNumber, vehicleColor, numberOfWheels, vehicleFuel));
+                    _handler.Add(new Car(vd.RegNum, vd.Color, vd.Wheels, vd.Fuel = words[4]));
                     break;
                 case "Motorcycle":
                     number = words[4];
-                    int.TryParse(number, out cylinderVolume);
-                    handler.Add(new Motorcycle(registrationNumber, vehicleColor, numberOfWheels, cylinderVolume));
+                    int.TryParse(number, out result);
+                    _handler.Add(new Motorcycle(vd.RegNum, vd.Color, vd.Wheels, vd.CylinderVol = result));
                     break;
             }
+            return _handler;
         }
         private string[] ConvertLine(string input)
         {
@@ -149,6 +132,5 @@ namespace Garage
             }
             return modWords;
         }
-
     }
 }

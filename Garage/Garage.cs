@@ -7,7 +7,6 @@ namespace Garage
 {
     internal class Garage<T> : IGarage<T> where T : IVehicle
     {
-
         private T[] vehicles;
         private int _count = 0;
         public int SizeOfGarage { get; }
